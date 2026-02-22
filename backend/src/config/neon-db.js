@@ -1,0 +1,33 @@
+import { PrismaClient } from "@prisma/client";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import ws from "ws";
+
+// Configure WebSocket for Neon
+neonConfig.webSocketConstructor = ws;
+
+// Create a connection pool
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaNeon(pool);
+
+// Create Prisma Client with Neon adapter
+const prisma = new PrismaClient({ adapter });
+
+// Connection events
+prisma
+  .$connect()
+  .then(() => {
+    console.log("✅ Connected to Neon PostgreSQL");
+  })
+  .catch((error) => {
+    console.error("❌ Failed to connect to Neon:", error.message);
+  });
+
+// Handle cleanup
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
+  await pool.end();
+});
+
+export default prisma;
