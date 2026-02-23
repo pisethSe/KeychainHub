@@ -1,77 +1,89 @@
-const { body } = require("express-validator");
-const constants = require("../config/constants");
+const { z } = require("zod");
 
-const authValidator = {
-  register: [
-    body("email")
-      .isEmail()
-      .withMessage(constants.VALIDATION_MESSAGES.INVALID_EMAIL)
-      .normalizeEmail(),
+/**
+ * Validation schema for user registration
+ * Validates name, email format, and password strength
+ */
+const registerSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Please provide a valid email")
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .max(50, "Password cannot exceed 50 characters"),
+  phone: z
+    .string()
+    .trim()
+    .min(10, "Phone number must be at least 10 characters")
+    .optional(),
+  address: z
+    .string()
+    .trim()
+    .max(500, "Address cannot exceed 500 characters")
+    .optional(),
+});
 
-    body("password")
-      .isLength({ min: 6 })
-      .withMessage(constants.VALIDATION_MESSAGES.PASSWORD_MIN)
-      .isLength({ max: 50 })
-      .withMessage(constants.VALIDATION_MESSAGES.PASSWORD_MAX),
+/**
+ * Validation schema for user login
+ * Validates email format and ensures password is provided
+ */
+const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Please provide a valid email")
+    .toLowerCase(),
+  password: z.string().min(1, "Password is required"),
+});
 
-    body("name")
-      .trim()
-      .isLength({ min: 2 })
-      .withMessage("Name must be at least 2 characters")
-      .isLength({ max: 100 })
-      .withMessage("Name cannot exceed 100 characters"),
+/**
+ * Validation schema for user profile update
+ * Validates optional fields for profile updates
+ */
+const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .optional(),
+  phone: z
+    .string()
+    .trim()
+    .min(10, "Phone number must be at least 10 characters")
+    .optional(),
+  address: z
+    .string()
+    .trim()
+    .max(500, "Address cannot exceed 500 characters")
+    .optional(),
+});
 
-    body("phone")
-      .optional()
-      .trim()
-      .isLength({ min: 10 })
-      .withMessage("Phone number must be at least 10 characters"),
+/**
+ * Validation schema for password change
+ * Validates old password and new password requirements
+ */
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, "Old password is required"),
+  newPassword: z
+    .string()
+    .min(6, "New password must be at least 6 characters")
+    .max(50, "New password cannot exceed 50 characters"),
+});
 
-    body("address")
-      .optional()
-      .trim()
-      .isLength({ max: 500 })
-      .withMessage("Address cannot exceed 500 characters"),
-  ],
-
-  login: [
-    body("email")
-      .isEmail()
-      .withMessage(constants.VALIDATION_MESSAGES.INVALID_EMAIL)
-      .normalizeEmail(),
-
-    body("password").notEmpty().withMessage("Password is required"),
-  ],
-
-  updateProfile: [
-    body("name")
-      .optional()
-      .trim()
-      .isLength({ min: 2 })
-      .withMessage("Name must be at least 2 characters"),
-
-    body("phone")
-      .optional()
-      .trim()
-      .isLength({ min: 10 })
-      .withMessage("Phone number must be at least 10 characters"),
-
-    body("address")
-      .optional()
-      .trim()
-      .isLength({ max: 500 })
-      .withMessage("Address cannot exceed 500 characters"),
-  ],
-
-  changePassword: [
-    body("oldPassword").notEmpty().withMessage("Old password is required"),
-
-    body("newPassword")
-      .isLength({ min: 6 })
-      .withMessage("New password must be at least 6 characters")
-      .isLength({ max: 50 })
-      .withMessage("New password cannot exceed 50 characters"),
-  ],
+module.exports = {
+  registerSchema,
+  loginSchema,
+  updateProfileSchema,
+  changePasswordSchema,
 };
-
-module.exports = authValidator;

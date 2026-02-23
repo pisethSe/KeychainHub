@@ -2,6 +2,22 @@ const jwt = require("jsonwebtoken");
 const env = require("../config/env");
 const ApiError = require("./apiError");
 
+// Original generateToken function for backward compatibility
+const generateToken = (id, res) => {
+  const token = jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || "7d",
+  });
+
+  res.cookie("jwt", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // set secure flag in production
+    sameSite: "strict", // use "strict" to prevent CSRF attacks, or "lax" if you need to allow some cross-site requests
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return token;
+};
+
 class JWTUtils {
   static generateToken(
     payload,
@@ -87,4 +103,6 @@ class JWTUtils {
   }
 }
 
-module.exports = JWTUtils;
+// Export both the original function and the JWTUtils class
+module.exports = generateToken;
+module.exports.JWTUtils = JWTUtils;
